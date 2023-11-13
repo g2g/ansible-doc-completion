@@ -1,0 +1,27 @@
+# Specify the path to the Ansible modules list file
+MODULES_LIST_FILE="${HOME}/.local/share/ansible/ansible_modules_list.txt"
+
+# Function to fetch all options from ansible-doc --help
+_get_ansible_doc_options() {
+    ansible-doc -h | sed 's/[ ]*-/-/g' | tr ',' '\n' | sed '/^-/!d;s/ .*//' | tr '\n' ' '
+}
+
+_ansible_doc_completion() {
+    local cur prev cmd options modules
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    cmd="ansible-doc"
+    options="$(_get_ansible_doc_options)"
+    modules="$(cat "${MODULES_LIST_FILE}")"
+
+    if [[ "${cur}" == -* ]]; then
+        COMPREPLY=( $(compgen -W "${options}" -- "${cur}") )
+        return 0
+    else
+        # Autocomplete modules if the previous word is not an option
+        COMPREPLY=($(compgen -W "${modules}" -- "${cur}"))
+        return 0
+    fi
+}
+complete -F _ansible_doc_completion ansible-doc
